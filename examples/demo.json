@@ -1,0 +1,25 @@
+{
+  "block_size": 2,
+  "prefill_weight": 1.0,
+  "scope": {
+    "model_revision": "toy-model-v1",
+    "tokenizer_revision": "toy-tokenizer-v1",
+    "tenant": "tenant-a",
+    "adapter": "base"
+  },
+  "workers": {"worker-1": 10, "worker-2": 5, "worker-3": 9},
+  "operations": [
+    {"type": "cache", "worker": "worker-1", "tokens": [0, 1, 2, 3]},
+    {"type": "cache", "worker": "worker-2", "tokens": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]},
+    {"type": "cache", "worker": "worker-3", "tokens": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]},
+    {"type": "route", "label": "load beats strongest cache hit", "tokens": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]},
+    {"type": "evict", "worker": "worker-2", "tokens": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], "block_indexes": [0]},
+    {"type": "route", "label": "eviction breaks the contiguous prefix", "tokens": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]},
+    {"type": "cache", "worker": "worker-2", "tokens": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]},
+    {"type": "route", "label": "new cache event earns full credit except the tail", "tokens": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]},
+    {"type": "route", "label": "another tenant receives no cache credit", "scope": {"model_revision": "toy-model-v1", "tokenizer_revision": "toy-tokenizer-v1", "tenant": "tenant-b", "adapter": "base"}, "tokens": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]},
+    {"type": "clear", "worker": "worker-2"},
+    {"type": "load", "worker": "worker-3", "decode_load": 30},
+    {"type": "route", "label": "load observation changes the winner", "tokens": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]}
+  ]
+}
